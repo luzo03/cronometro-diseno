@@ -1,0 +1,40 @@
+appId: com.luzo03.designtimer
+productName: DesignTimer
+copyright: Copyright © 2026
+
+directories:
+  buildResources: build
+  output: dist
+
+files:
+  - '!**/.vscode/*'
+  - '!src/*'
+  - '!electron/*'
+  - '!.editorconfig'
+  - '!.eslintignore'
+  - '!.prettierrc*'
+  - '!CHANGELOG.md'
+  - '!publicar-version.ps1'
+
+win:
+  executableName: design-timer
+  target:
+    - target: nsis
+      arch:
+        - x64
+
+nsis:
+  artifactName: ${name}-${version}-setup.${ext}
+  shortcutName: ${productName}
+  uninstallDisplayName: ${productName}
+  createDesktopShortcut: always
+  oneClick: false
+  allowToChangeInstallationDirectory: true
+
+npmRebuild: false
+
+publish:
+  provider: github
+  owner: luzo03
+  repo: cronometro-diseno
+  releaseType: release

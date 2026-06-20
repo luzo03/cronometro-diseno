@@ -1,0 +1,19 @@
+# ─────────────────────────────────────────────
+#  Publicar nueva versión de DesignTimer a GitHub Releases
+# ─────────────────────────────────────────────
+
+# 1. Pega aquí tu GitHub Personal Access Token (scope: repo)
+$env:GH_TOKEN = "PEGA_TU_TOKEN_AQUI"
+
+# 2. Sube el número de versión automáticamente (patch: 1.0.0 -> 1.0.1)
+Write-Host "Subiendo versión..." -ForegroundColor Cyan
+npm version patch --no-git-tag-version
+
+# 3. Compila y publica a GitHub Releases
+Write-Host "Compilando y publicando..." -ForegroundColor Cyan
+npm run build
+npx electron-builder --win --x64 --publish always
+
+Write-Host ""
+Write-Host "¡Listo! La nueva versión está en GitHub Releases." -ForegroundColor Green
+Write-Host "Los clientes recibirán la actualización al abrir la app." -ForegroundColor Green
