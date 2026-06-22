@@ -1,5 +1,6 @@
-import { app, BrowserWindow, ipcMain, shell } from 'electron'
+import { app, BrowserWindow, ipcMain, shell, dialog } from 'electron'
 import { join } from 'path'
+import { writeFile } from 'fs/promises'
 import { electronApp, is, optimizer } from '@electron-toolkit/utils'
 import { autoUpdater } from 'electron-updater'
 
@@ -7,10 +8,10 @@ let mainWindow: BrowserWindow | null = null
 
 function createWindow(): void {
   mainWindow = new BrowserWindow({
-    width: 360,
-    height: 220,
+    width: 400,
+    height: 440,
     minWidth: 340,
-    minHeight: 200,
+    minHeight: 220,
     maxWidth: 520,
     show: false,
     frame: false,
@@ -57,6 +58,36 @@ function setupWindowControls(): void {
   ipcMain.handle('window:getAlwaysOnTop', () => mainWindow?.isAlwaysOnTop() ?? true)
 }
 
+function setupFileHandlers(): void {
+  ipcMain.handle(
+    'file:saveCSV',
+    async (
+      _e,
+      payload: { content: string; suggestedName: string }
+    ): Promise<{ ok: boolean; path?: string; canceled?: boolean; error?: string }> => {
+      if (!mainWindow) return { ok: false, error: 'no window' }
+      try {
+        const result = await dialog.showSaveDialog(mainWindow, {
+          title: 'Guardar reporte',
+          defaultPath: payload.suggestedName,
+          filters: [{ name: 'CSV', extensions: ['csv'] }]
+        })
+        if (result.canceled || !result.filePath) {
+          return { ok: false, canceled: true }
+        }
+        await writeFile(result.filePath, payload.content, 'utf8')
+        return { ok: true, path: result.filePath }
+      } catch (err) {
+        return { ok: false, error: err instanceof Error ? err.message : String(err) }
+      }
+    }
+  )
+
+  ipcMain.handle('file:revealInFolder', (_e, filePath: string) => {
+    shell.showItemInFolder(filePath)
+  })
+}
+
 function setupUpdater(): void {
   autoUpdater.autoDownload = true
   autoUpdater.autoInstallOnAppQuit = true
@@ -92,6 +123,7 @@ app.whenReady().then(() => {
   })
 
   setupWindowControls()
+  setupFileHandlers()
   createWindow()
 
   if (!is.dev) {

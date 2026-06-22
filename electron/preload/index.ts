@@ -10,6 +10,19 @@ const api = {
     setSize: (width: number, height: number) =>
       ipcRenderer.invoke('window:setSize', width, height)
   },
+  file: {
+    saveCSV: (payload: {
+      content: string
+      suggestedName: string
+    }): Promise<{
+      ok: boolean
+      path?: string
+      canceled?: boolean
+      error?: string
+    }> => ipcRenderer.invoke('file:saveCSV', payload),
+    revealInFolder: (path: string): Promise<void> =>
+      ipcRenderer.invoke('file:revealInFolder', path)
+  },
   updater: {
     checkForUpdates: () => ipcRenderer.invoke('updater:checkForUpdates'),
     installUpdate: () => ipcRenderer.invoke('updater:installUpdate'),

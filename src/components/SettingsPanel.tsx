@@ -11,6 +11,12 @@ export default function SettingsPanel(): JSX.Element {
   const removeCurrency = useSettingsStore((s) => s.removeCurrency)
   const alwaysOnTop = useSettingsStore((s) => s.alwaysOnTop)
   const setAlwaysOnTop = useSettingsStore((s) => s.setAlwaysOnTop)
+  const goalDailyHours = useSettingsStore((s) => s.goalDailyHours)
+  const setGoalDailyHours = useSettingsStore((s) => s.setGoalDailyHours)
+  const goalWeeklyHours = useSettingsStore((s) => s.goalWeeklyHours)
+  const setGoalWeeklyHours = useSettingsStore((s) => s.setGoalWeeklyHours)
+  const goalMonthlyHours = useSettingsStore((s) => s.goalMonthlyHours)
+  const setGoalMonthlyHours = useSettingsStore((s) => s.setGoalMonthlyHours)
 
   const [showCustomForm, setShowCustomForm] = useState(false)
   const [newCode, setNewCode] = useState('')
@@ -39,7 +45,7 @@ export default function SettingsPanel(): JSX.Element {
   }
 
   return (
-    <div className="px-3 pt-2 pb-3 flex flex-col gap-3 no-drag overflow-y-auto">
+    <div className="px-3 pt-2 pb-3 flex flex-col gap-3 no-drag">
       <Section title="Tarifa por hora">
         <input
           type="number"
@@ -50,6 +56,17 @@ export default function SettingsPanel(): JSX.Element {
           step="0.01"
           className="w-full px-3 py-2 rounded-lg bg-ink-700 border border-chalk-08 text-chalk text-[12px] font-mono tabular-nums focus-mint transition"
         />
+      </Section>
+
+      <Section title="Metas de horas">
+        <div className="grid grid-cols-3 gap-1.5">
+          <GoalInput label="día" value={goalDailyHours} onChange={setGoalDailyHours} />
+          <GoalInput label="sem" value={goalWeeklyHours} onChange={setGoalWeeklyHours} />
+          <GoalInput label="mes" value={goalMonthlyHours} onChange={setGoalMonthlyHours} />
+        </div>
+        <p className="mt-1.5 text-[10px] text-chalk-30 leading-snug">
+          Pon 0 para ocultar la meta de ese periodo.
+        </p>
       </Section>
 
       <Section title="Ventana">
@@ -149,6 +166,36 @@ export default function SettingsPanel(): JSX.Element {
           </div>
         )}
       </Section>
+    </div>
+  )
+}
+
+function GoalInput({
+  label,
+  value,
+  onChange
+}: {
+  label: string
+  value: number
+  onChange: (n: number) => void
+}): JSX.Element {
+  return (
+    <div className="flex flex-col gap-1">
+      <span className="text-[9px] uppercase tracking-wider text-chalk-50 text-center">
+        {label}
+      </span>
+      <div className="flex items-center bg-ink-700 border border-chalk-08 rounded-lg focus-within:border-mint transition">
+        <input
+          type="number"
+          value={value || ''}
+          onChange={(e) => onChange(parseFloat(e.target.value) || 0)}
+          placeholder="0"
+          min="0"
+          step="0.5"
+          className="w-full bg-transparent pl-2 pr-1 py-1.5 text-chalk text-[12px] font-mono tabular-nums text-right"
+        />
+        <span className="pr-2 text-chalk-50 text-[10px]">h</span>
+      </div>
     </div>
   )
 }

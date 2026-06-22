@@ -7,3 +7,7 @@ out
 .env.local
 dev-app-update.yml
 .vite-cache
+*.tsbuildinfo
+
+# Contiene el GH_TOKEN, no debe subirse
+publicar-version.ps1

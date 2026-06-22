@@ -1,6 +1,8 @@
 # ─────────────────────────────────────────────
 #  Publicar nueva versión de DesignTimer a GitHub Releases
 # ─────────────────────────────────────────────
+# Copia este archivo como `publicar-version.ps1` y pega tu token.
+# El archivo real está en .gitignore para no subir el token a GitHub.
 
 # 1. Pega aquí tu GitHub Personal Access Token (scope: repo)
 $env:GH_TOKEN = "PEGA_TU_TOKEN_AQUI"

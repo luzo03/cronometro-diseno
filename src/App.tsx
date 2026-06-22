@@ -6,15 +6,13 @@ import ComparisonResult from '@/components/ComparisonResult'
 import HistoryPanel from '@/components/HistoryPanel'
 import SettingsPanel from '@/components/SettingsPanel'
 import UpdateBanner from '@/components/UpdateBanner'
+import ProductivityBars from '@/components/ProductivityBars'
 import { useTimerStore, startTickerOnce } from '@/stores/timerStore'
 import { useJobsStore } from '@/stores/jobsStore'
 import { useSettingsStore } from '@/stores/settingsStore'
 import { findCurrency } from '@/lib/currencies'
 
 type Panel = 'none' | 'history' | 'settings'
-
-const COMPACT_SIZE = { w: 380, h: 280 }
-const EXPANDED_SIZE = { w: 380, h: 560 }
 
 export default function App(): JSX.Element {
   const [jobName, setJobName] = useState('')
@@ -42,11 +40,6 @@ export default function App(): JSX.Element {
   useEffect(() => {
     window.api?.window.setAlwaysOnTop(alwaysOnTop)
   }, [alwaysOnTop])
-
-  useEffect(() => {
-    const size = panel === 'none' ? COMPACT_SIZE : EXPANDED_SIZE
-    window.api?.window.setSize(size.w, size.h)
-  }, [panel])
 
   const chargedNum = parseFloat(charged) || 0
   const currency = findCurrency(currencyCode, customCurrencies)
@@ -83,62 +76,66 @@ export default function App(): JSX.Element {
         running={running}
       />
 
-      <div className="px-4 pt-3 pb-3 flex flex-col gap-3">
-        <div className="flex items-center gap-4">
-          <TimerDisplay charged={chargedNum} hourlyRate={hourlyRate} />
-          <div className="flex-1 min-w-0">
-            <JobForm
-              jobName={jobName}
-              charged={charged}
-              currency={currency}
-              currencies={allCurrencies()}
-              onNameChange={setJobName}
-              onChargedChange={setCharged}
-              onCurrencyChange={setCurrencyCode}
-            />
+      <div className="flex-1 min-h-0 overflow-y-auto overflow-x-hidden">
+        <div className="px-4 pt-3 pb-3 flex flex-col gap-3">
+          <div className="flex items-center gap-4">
+            <TimerDisplay charged={chargedNum} hourlyRate={hourlyRate} />
+            <div className="flex-1 min-w-0">
+              <JobForm
+                jobName={jobName}
+                charged={charged}
+                currency={currency}
+                currencies={allCurrencies()}
+                onNameChange={setJobName}
+                onChargedChange={setCharged}
+                onCurrencyChange={setCurrencyCode}
+              />
+            </div>
           </div>
+
+          {hourlyRate <= 0 && (
+            <button
+              onClick={() => setPanel('settings')}
+              className="no-drag w-full px-3 py-2 rounded-lg bg-mint-dim border border-mint/30 text-mint text-[11px] font-medium hover:bg-mint-glow transition text-left flex items-center justify-between"
+            >
+              <span>Configura tu tarifa por hora</span>
+              <span className="text-[10px] opacity-70">Ajustes →</span>
+            </button>
+          )}
+
+          {showComparison && (
+            <ComparisonResult
+              charged={chargedNum}
+              elapsedMs={elapsedMs}
+              hourlyRate={hourlyRate}
+              currency={currency}
+            />
+          )}
+
+          {canSave && (
+            <button
+              onClick={handleSave}
+              className="no-drag flex items-center justify-center gap-1.5 px-3 py-2 rounded-lg bg-mint hover:bg-mint-soft text-ink text-[11px] font-semibold transition animate-fadeIn"
+            >
+              <Save size={11} />
+              Guardar trabajo
+            </button>
+          )}
+
+          <ProductivityBars />
         </div>
 
-        {hourlyRate <= 0 && (
-          <button
-            onClick={() => setPanel('settings')}
-            className="no-drag w-full px-3 py-2 rounded-lg bg-mint-dim border border-mint/30 text-mint text-[11px] font-medium hover:bg-mint-glow transition text-left flex items-center justify-between"
-          >
-            <span>Configura tu tarifa por hora</span>
-            <span className="text-[10px] opacity-70">Ajustes →</span>
-          </button>
+        {panel === 'history' && (
+          <div className="border-t border-chalk-08">
+            <HistoryPanel />
+          </div>
         )}
-
-        {showComparison && (
-          <ComparisonResult
-            charged={chargedNum}
-            elapsedMs={elapsedMs}
-            hourlyRate={hourlyRate}
-            currency={currency}
-          />
-        )}
-
-        {canSave && (
-          <button
-            onClick={handleSave}
-            className="no-drag flex items-center justify-center gap-1.5 px-3 py-2 rounded-lg bg-mint hover:bg-mint-soft text-ink text-[11px] font-semibold transition animate-fadeIn"
-          >
-            <Save size={11} />
-            Guardar trabajo
-          </button>
+        {panel === 'settings' && (
+          <div className="border-t border-chalk-08">
+            <SettingsPanel />
+          </div>
         )}
       </div>
-
-      {panel === 'history' && (
-        <div className="flex-1 min-h-0 border-t border-chalk-08">
-          <HistoryPanel />
-        </div>
-      )}
-      {panel === 'settings' && (
-        <div className="flex-1 min-h-0 border-t border-chalk-08">
-          <SettingsPanel />
-        </div>
-      )}
 
       <UpdateBanner />
     </div>
