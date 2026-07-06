@@ -1,10 +1,11 @@
-import { useEffect, useState } from 'react'
-import { X, Settings, History, Save, Minus } from 'lucide-react'
+import { useEffect, useRef, useState } from 'react'
+import { X, Settings, History, Save, Minus, BarChart3 } from 'lucide-react'
 import TimerDisplay from '@/components/TimerDisplay'
 import JobForm from '@/components/JobForm'
 import ComparisonResult from '@/components/ComparisonResult'
 import HistoryPanel from '@/components/HistoryPanel'
 import SettingsPanel from '@/components/SettingsPanel'
+import StatsPanel from '@/components/StatsPanel'
 import UpdateBanner from '@/components/UpdateBanner'
 import ProductivityBars from '@/components/ProductivityBars'
 import { useTimerStore, startTickerOnce } from '@/stores/timerStore'
@@ -12,7 +13,7 @@ import { useJobsStore } from '@/stores/jobsStore'
 import { useSettingsStore } from '@/stores/settingsStore'
 import { findCurrency } from '@/lib/currencies'
 
-type Panel = 'none' | 'history' | 'settings'
+type Panel = 'none' | 'history' | 'stats' | 'settings'
 
 export default function App(): JSX.Element {
   const [jobName, setJobName] = useState('')
@@ -46,6 +47,30 @@ export default function App(): JSX.Element {
   const canSave = elapsedMs > 0 && chargedNum > 0 && hourlyRate > 0 && !running
   const showComparison = chargedNum > 0 && hourlyRate > 0 && elapsedMs > 0
 
+  const notifiedRef = useRef(false)
+  useEffect(() => {
+    if (elapsedMs === 0) {
+      notifiedRef.current = false
+      return
+    }
+    if (chargedNum <= 0 || hourlyRate <= 0) return
+    const budgetMs = (chargedNum / hourlyRate) * 3_600_000
+    if (budgetMs <= 0) return
+    // Si el elapsed baja del presupuesto (usuario subió el monto cobrado),
+    // permitimos que la próxima cruzada vuelva a notificar.
+    if (elapsedMs < budgetMs) {
+      notifiedRef.current = false
+      return
+    }
+    if (notifiedRef.current) return
+    notifiedRef.current = true
+    const label = jobName.trim() ? ` — ${jobName.trim()}` : ''
+    window.api?.notifications.notify({
+      title: `¡Llegaste al presupuesto!${label}`,
+      body: 'Ya cubriste el tiempo que cobraste. Cada minuto extra es regalado.'
+    })
+  }, [elapsedMs, chargedNum, hourlyRate, jobName])
+
   function handleSave(): void {
     if (!canSave) return
     addJob({
@@ -70,6 +95,7 @@ export default function App(): JSX.Element {
         onClose={() => window.api?.window.close()}
         onMinimize={() => window.api?.window.minimize()}
         onToggleHistory={() => togglePanel('history')}
+        onToggleStats={() => togglePanel('stats')}
         onToggleSettings={() => togglePanel('settings')}
         panel={panel}
         jobsCount={jobsCount}
@@ -130,6 +156,11 @@ export default function App(): JSX.Element {
             <HistoryPanel />
           </div>
         )}
+        {panel === 'stats' && (
+          <div className="border-t border-chalk-08">
+            <StatsPanel />
+          </div>
+        )}
         {panel === 'settings' && (
           <div className="border-t border-chalk-08">
             <SettingsPanel />
@@ -146,6 +177,7 @@ function TitleBar({
   onClose,
   onMinimize,
   onToggleHistory,
+  onToggleStats,
   onToggleSettings,
   panel,
   jobsCount,
@@ -154,6 +186,7 @@ function TitleBar({
   onClose: () => void
   onMinimize: () => void
   onToggleHistory: () => void
+  onToggleStats: () => void
   onToggleSettings: () => void
   panel: Panel
   jobsCount: number
@@ -180,6 +213,13 @@ function TitleBar({
               {jobsCount}
             </span>
           )}
+        </IconButton>
+        <IconButton
+          onClick={onToggleStats}
+          active={panel === 'stats'}
+          title="Estadísticas"
+        >
+          <BarChart3 size={11} />
         </IconButton>
         <IconButton
           onClick={onToggleSettings}

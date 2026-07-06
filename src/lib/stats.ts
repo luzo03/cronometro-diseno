@@ -48,3 +48,35 @@ export function totalChargedByCurrency(jobs: Job[]): EarningsByCurrency {
   }
   return out
 }
+
+export type Effectiveness = {
+  effectiveMs: number // tiempo dentro del presupuesto (te lo pagaron)
+  lostMs: number // tiempo que te pasaste del presupuesto (no cobrado)
+  totalMs: number
+  ratio: number // 0..1 — 1 = todo efectivo
+}
+
+export function jobEffectiveness(job: Job): Effectiveness {
+  const budgetMs =
+    job.hourlyRate > 0 && job.charged > 0
+      ? (job.charged / job.hourlyRate) * 3_600_000
+      : job.elapsedMs
+  const effectiveMs = Math.min(job.elapsedMs, budgetMs)
+  const lostMs = Math.max(0, job.elapsedMs - budgetMs)
+  const totalMs = job.elapsedMs
+  const ratio = totalMs > 0 ? effectiveMs / totalMs : 1
+  return { effectiveMs, lostMs, totalMs, ratio }
+}
+
+export function totalEffectiveness(jobs: Job[]): Effectiveness {
+  let effectiveMs = 0
+  let lostMs = 0
+  for (const j of jobs) {
+    const e = jobEffectiveness(j)
+    effectiveMs += e.effectiveMs
+    lostMs += e.lostMs
+  }
+  const totalMs = effectiveMs + lostMs
+  const ratio = totalMs > 0 ? effectiveMs / totalMs : 1
+  return { effectiveMs, lostMs, totalMs, ratio }
+}

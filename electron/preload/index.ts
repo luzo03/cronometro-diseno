@@ -23,6 +23,10 @@ const api = {
     revealInFolder: (path: string): Promise<void> =>
       ipcRenderer.invoke('file:revealInFolder', path)
   },
+  notifications: {
+    notify: (payload: { title: string; body: string }): Promise<boolean> =>
+      ipcRenderer.invoke('notify', payload)
+  },
   updater: {
     checkForUpdates: () => ipcRenderer.invoke('updater:checkForUpdates'),
     installUpdate: () => ipcRenderer.invoke('updater:installUpdate'),

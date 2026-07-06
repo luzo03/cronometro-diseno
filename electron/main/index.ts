@@ -1,4 +1,4 @@
-import { app, BrowserWindow, ipcMain, shell, dialog } from 'electron'
+import { app, BrowserWindow, ipcMain, shell, dialog, Notification } from 'electron'
 import { join } from 'path'
 import { writeFile } from 'fs/promises'
 import { electronApp, is, optimizer } from '@electron-toolkit/utils'
@@ -88,6 +88,28 @@ function setupFileHandlers(): void {
   })
 }
 
+function setupNotifications(): void {
+  ipcMain.handle(
+    'notify',
+    (_e, payload: { title: string; body: string }): boolean => {
+      if (!Notification.isSupported()) return false
+      const n = new Notification({
+        title: payload.title,
+        body: payload.body,
+        silent: false
+      })
+      n.on('click', () => {
+        if (mainWindow) {
+          if (mainWindow.isMinimized()) mainWindow.restore()
+          mainWindow.focus()
+        }
+      })
+      n.show()
+      return true
+    }
+  )
+}
+
 function setupUpdater(): void {
   autoUpdater.autoDownload = true
   autoUpdater.autoInstallOnAppQuit = true
@@ -124,6 +146,7 @@ app.whenReady().then(() => {
 
   setupWindowControls()
   setupFileHandlers()
+  setupNotifications()
   createWindow()
 
   if (!is.dev) {
