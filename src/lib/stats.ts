@@ -49,6 +49,12 @@ export function totalChargedByCurrency(jobs: Job[]): EarningsByCurrency {
   return out
 }
 
+export function totalChargedInCurrency(jobs: Job[], code: string): number {
+  return jobs
+    .filter((j) => j.currency === code)
+    .reduce((acc, j) => acc + j.charged, 0)
+}
+
 export type Effectiveness = {
   effectiveMs: number // tiempo dentro del presupuesto (te lo pagaron)
   lostMs: number // tiempo que te pasaste del presupuesto (no cobrado)

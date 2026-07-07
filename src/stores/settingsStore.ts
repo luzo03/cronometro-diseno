@@ -4,6 +4,9 @@ import { presetCurrencies } from '@/lib/currencies'
 
 const STORAGE_KEY = 'designtimer:settings'
 
+export type MoneyGoals = { day: number; week: number; month: number }
+export type ProductivityMode = 'hours' | 'money'
+
 type PersistedSettings = {
   hourlyRate: number
   currencyCode: string
@@ -12,6 +15,8 @@ type PersistedSettings = {
   goalDailyHours: number
   goalWeeklyHours: number
   goalMonthlyHours: number
+  moneyGoals: Record<string, MoneyGoals>
+  productivityMode: ProductivityMode
 }
 
 type SettingsState = PersistedSettings & {
@@ -23,6 +28,13 @@ type SettingsState = PersistedSettings & {
   setGoalDailyHours: (h: number) => void
   setGoalWeeklyHours: (h: number) => void
   setGoalMonthlyHours: (h: number) => void
+  setMoneyGoal: (
+    currency: string,
+    period: 'day' | 'week' | 'month',
+    value: number
+  ) => void
+  getMoneyGoals: (currency: string) => MoneyGoals
+  setProductivityMode: (mode: ProductivityMode) => void
   allCurrencies: () => Currency[]
 }
 
@@ -34,8 +46,26 @@ function defaultSettings(): PersistedSettings {
     alwaysOnTop: true,
     goalDailyHours: 6,
     goalWeeklyHours: 30,
-    goalMonthlyHours: 120
+    goalMonthlyHours: 120,
+    moneyGoals: {},
+    productivityMode: 'hours'
   }
+}
+
+function normalizeMoneyGoals(raw: unknown): Record<string, MoneyGoals> {
+  if (!raw || typeof raw !== 'object') return {}
+  const out: Record<string, MoneyGoals> = {}
+  for (const [code, v] of Object.entries(raw as Record<string, unknown>)) {
+    if (v && typeof v === 'object') {
+      const g = v as Partial<MoneyGoals>
+      out[code] = {
+        day: typeof g.day === 'number' ? g.day : 0,
+        week: typeof g.week === 'number' ? g.week : 0,
+        month: typeof g.month === 'number' ? g.month : 0
+      }
+    }
+  }
+  return out
 }
 
 function loadSettings(): PersistedSettings {
@@ -61,7 +91,10 @@ function loadSettings(): PersistedSettings {
       goalMonthlyHours:
         typeof parsed.goalMonthlyHours === 'number'
           ? parsed.goalMonthlyHours
-          : d.goalMonthlyHours
+          : d.goalMonthlyHours,
+      moneyGoals: normalizeMoneyGoals(parsed.moneyGoals),
+      productivityMode:
+        parsed.productivityMode === 'money' ? 'money' : 'hours'
     }
   } catch {
     return defaultSettings()
@@ -77,7 +110,9 @@ function persist(state: PersistedSettings): void {
     alwaysOnTop: state.alwaysOnTop,
     goalDailyHours: state.goalDailyHours,
     goalWeeklyHours: state.goalWeeklyHours,
-    goalMonthlyHours: state.goalMonthlyHours
+    goalMonthlyHours: state.goalMonthlyHours,
+    moneyGoals: state.moneyGoals,
+    productivityMode: state.productivityMode
   }
   localStorage.setItem(STORAGE_KEY, JSON.stringify(toSave))
 }
@@ -132,6 +167,24 @@ export const useSettingsStore = create<SettingsState>((set, get) => {
 
     setGoalMonthlyHours: (h) => {
       set({ goalMonthlyHours: Math.max(0, h) })
+      persist(get())
+    },
+
+    setMoneyGoal: (currency, period, value) => {
+      const existing = get().moneyGoals[currency] ?? { day: 0, week: 0, month: 0 }
+      const next = {
+        ...get().moneyGoals,
+        [currency]: { ...existing, [period]: Math.max(0, value) }
+      }
+      set({ moneyGoals: next })
+      persist(get())
+    },
+
+    getMoneyGoals: (currency) =>
+      get().moneyGoals[currency] ?? { day: 0, week: 0, month: 0 },
+
+    setProductivityMode: (mode) => {
+      set({ productivityMode: mode })
       persist(get())
     },
 

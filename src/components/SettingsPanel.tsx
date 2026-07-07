@@ -17,6 +17,10 @@ export default function SettingsPanel(): JSX.Element {
   const setGoalWeeklyHours = useSettingsStore((s) => s.setGoalWeeklyHours)
   const goalMonthlyHours = useSettingsStore((s) => s.goalMonthlyHours)
   const setGoalMonthlyHours = useSettingsStore((s) => s.setGoalMonthlyHours)
+  const currencyCode = useSettingsStore((s) => s.currencyCode)
+  const getMoneyGoals = useSettingsStore((s) => s.getMoneyGoals)
+  const setMoneyGoal = useSettingsStore((s) => s.setMoneyGoal)
+  const currentMoneyGoals = getMoneyGoals(currencyCode)
 
   const [showCustomForm, setShowCustomForm] = useState(false)
   const [newCode, setNewCode] = useState('')
@@ -60,12 +64,53 @@ export default function SettingsPanel(): JSX.Element {
 
       <Section title="Metas de horas">
         <div className="grid grid-cols-3 gap-1.5">
-          <GoalInput label="día" value={goalDailyHours} onChange={setGoalDailyHours} />
-          <GoalInput label="sem" value={goalWeeklyHours} onChange={setGoalWeeklyHours} />
-          <GoalInput label="mes" value={goalMonthlyHours} onChange={setGoalMonthlyHours} />
+          <GoalInput
+            label="día"
+            value={goalDailyHours}
+            onChange={setGoalDailyHours}
+            unit="h"
+          />
+          <GoalInput
+            label="sem"
+            value={goalWeeklyHours}
+            onChange={setGoalWeeklyHours}
+            unit="h"
+          />
+          <GoalInput
+            label="mes"
+            value={goalMonthlyHours}
+            onChange={setGoalMonthlyHours}
+            unit="h"
+          />
         </div>
         <p className="mt-1.5 text-[10px] text-chalk-30 leading-snug">
           Pon 0 para ocultar la meta de ese periodo.
+        </p>
+      </Section>
+
+      <Section title={`Metas de ingreso (${currencyCode})`}>
+        <div className="grid grid-cols-3 gap-1.5">
+          <GoalInput
+            label="día"
+            value={currentMoneyGoals.day}
+            onChange={(v) => setMoneyGoal(currencyCode, 'day', v)}
+            unit={currencyCode}
+          />
+          <GoalInput
+            label="sem"
+            value={currentMoneyGoals.week}
+            onChange={(v) => setMoneyGoal(currencyCode, 'week', v)}
+            unit={currencyCode}
+          />
+          <GoalInput
+            label="mes"
+            value={currentMoneyGoals.month}
+            onChange={(v) => setMoneyGoal(currencyCode, 'month', v)}
+            unit={currencyCode}
+          />
+        </div>
+        <p className="mt-1.5 text-[10px] text-chalk-30 leading-snug">
+          Las metas se guardan por moneda. Cambia la moneda arriba para editar otras.
         </p>
       </Section>
 
@@ -173,11 +218,13 @@ export default function SettingsPanel(): JSX.Element {
 function GoalInput({
   label,
   value,
-  onChange
+  onChange,
+  unit
 }: {
   label: string
   value: number
   onChange: (n: number) => void
+  unit: string
 }): JSX.Element {
   return (
     <div className="flex flex-col gap-1">
@@ -191,10 +238,12 @@ function GoalInput({
           onChange={(e) => onChange(parseFloat(e.target.value) || 0)}
           placeholder="0"
           min="0"
-          step="0.5"
-          className="w-full bg-transparent pl-2 pr-1 py-1.5 text-chalk text-[12px] font-mono tabular-nums text-right"
+          step={unit === 'h' ? '0.5' : '1'}
+          className="w-full bg-transparent pl-2 pr-1 py-1.5 text-chalk text-[12px] font-mono tabular-nums text-right min-w-0"
         />
-        <span className="pr-2 text-chalk-50 text-[10px]">h</span>
+        <span className="pr-2 text-chalk-50 text-[9px] font-mono uppercase">
+          {unit}
+        </span>
       </div>
     </div>
   )
