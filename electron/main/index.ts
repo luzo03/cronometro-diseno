@@ -56,6 +56,11 @@ function setupWindowControls(): void {
     mainWindow.setBounds({ x, y, width, height }, true)
   })
   ipcMain.handle('window:getAlwaysOnTop', () => mainWindow?.isAlwaysOnTop() ?? true)
+  ipcMain.handle('window:setZoomFactor', (_e, factor: number) => {
+    if (!mainWindow) return
+    const clamped = Math.max(0.7, Math.min(1.6, factor))
+    mainWindow.webContents.setZoomFactor(clamped)
+  })
 }
 
 function setupFileHandlers(): void {

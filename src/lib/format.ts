@@ -14,16 +14,21 @@ export function formatMoney(amount: number, currency: Currency): string {
   try {
     return new Intl.NumberFormat(currency.locale, {
       style: 'currency',
-      currency: isStandardCurrencyCode(currency.code) ? currency.code : 'USD',
+      currency: currency.code,
       maximumFractionDigits: 2
     }).format(amount)
   } catch {
-    return `${currency.symbol}${amount.toFixed(2)} ${currency.code}`
+    // Código no reconocido por Intl (moneda custom). Formato manual con su símbolo real.
+    try {
+      const formatted = new Intl.NumberFormat(currency.locale, {
+        minimumFractionDigits: 2,
+        maximumFractionDigits: 2
+      }).format(amount)
+      return `${currency.symbol}${formatted} ${currency.code}`
+    } catch {
+      return `${currency.symbol}${amount.toFixed(2)} ${currency.code}`
+    }
   }
-}
-
-function isStandardCurrencyCode(code: string): boolean {
-  return /^[A-Z]{3}$/.test(code)
 }
 
 export type Comparison = {

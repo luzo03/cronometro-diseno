@@ -18,9 +18,14 @@ export default function ProductivityBars(): JSX.Element {
   const goalMonth = useSettingsStore((s) => s.goalMonthlyHours)
   const customCurrencies = useSettingsStore((s) => s.customCurrencies)
   const currencyCode = useSettingsStore((s) => s.currencyCode)
-  const getMoneyGoals = useSettingsStore((s) => s.getMoneyGoals)
+  const moneyGoals = useSettingsStore((s) => s.moneyGoals)
   const mode = useSettingsStore((s) => s.productivityMode)
   const setMode = useSettingsStore((s) => s.setProductivityMode)
+  const currentMoneyGoals = moneyGoals[currencyCode] ?? {
+    day: 0,
+    week: 0,
+    month: 0
+  }
 
   const dayJobs = jobsInPeriod(jobs, 'day')
   const weekJobs = jobsInPeriod(jobs, 'week')
@@ -59,7 +64,7 @@ export default function ProductivityBars(): JSX.Element {
           weekJobs={weekJobs}
           monthJobs={monthJobs}
           currencyCode={currencyCode}
-          goals={getMoneyGoals(currencyCode)}
+          goals={currentMoneyGoals}
           customCurrencies={customCurrencies}
         />
       )}

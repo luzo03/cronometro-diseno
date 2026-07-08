@@ -17,6 +17,7 @@ type PersistedSettings = {
   goalMonthlyHours: number
   moneyGoals: Record<string, MoneyGoals>
   productivityMode: ProductivityMode
+  zoomFactor: number
 }
 
 type SettingsState = PersistedSettings & {
@@ -35,6 +36,7 @@ type SettingsState = PersistedSettings & {
   ) => void
   getMoneyGoals: (currency: string) => MoneyGoals
   setProductivityMode: (mode: ProductivityMode) => void
+  setZoomFactor: (factor: number) => void
   allCurrencies: () => Currency[]
 }
 
@@ -48,7 +50,8 @@ function defaultSettings(): PersistedSettings {
     goalWeeklyHours: 30,
     goalMonthlyHours: 120,
     moneyGoals: {},
-    productivityMode: 'hours'
+    productivityMode: 'hours',
+    zoomFactor: 1
   }
 }
 
@@ -94,7 +97,11 @@ function loadSettings(): PersistedSettings {
           : d.goalMonthlyHours,
       moneyGoals: normalizeMoneyGoals(parsed.moneyGoals),
       productivityMode:
-        parsed.productivityMode === 'money' ? 'money' : 'hours'
+        parsed.productivityMode === 'money' ? 'money' : 'hours',
+      zoomFactor:
+        typeof parsed.zoomFactor === 'number' && parsed.zoomFactor > 0
+          ? Math.max(0.7, Math.min(1.6, parsed.zoomFactor))
+          : d.zoomFactor
     }
   } catch {
     return defaultSettings()
@@ -112,7 +119,8 @@ function persist(state: PersistedSettings): void {
     goalWeeklyHours: state.goalWeeklyHours,
     goalMonthlyHours: state.goalMonthlyHours,
     moneyGoals: state.moneyGoals,
-    productivityMode: state.productivityMode
+    productivityMode: state.productivityMode,
+    zoomFactor: state.zoomFactor
   }
   localStorage.setItem(STORAGE_KEY, JSON.stringify(toSave))
 }
@@ -185,6 +193,12 @@ export const useSettingsStore = create<SettingsState>((set, get) => {
 
     setProductivityMode: (mode) => {
       set({ productivityMode: mode })
+      persist(get())
+    },
+
+    setZoomFactor: (factor) => {
+      const clamped = Math.max(0.7, Math.min(1.6, factor))
+      set({ zoomFactor: clamped })
       persist(get())
     },
 

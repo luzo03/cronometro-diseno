@@ -8,7 +8,9 @@ const api = {
     setAlwaysOnTop: (flag: boolean) => ipcRenderer.invoke('window:setAlwaysOnTop', flag),
     getAlwaysOnTop: () => ipcRenderer.invoke('window:getAlwaysOnTop'),
     setSize: (width: number, height: number) =>
-      ipcRenderer.invoke('window:setSize', width, height)
+      ipcRenderer.invoke('window:setSize', width, height),
+    setZoomFactor: (factor: number) =>
+      ipcRenderer.invoke('window:setZoomFactor', factor)
   },
   file: {
     saveCSV: (payload: {

@@ -76,7 +76,7 @@ export default function TimerDisplay({ charged, hourlyRate }: Props): JSX.Elemen
               className="text-[9px] uppercase tracking-widest mt-0.5"
               style={{ color, opacity: 0.7 }}
             >
-              {ratio < 1 ? `${Math.round(clampedRatio * 100)}%` : 'excedido'}
+              {ratio <= 1 ? `${Math.round(clampedRatio * 100)}%` : 'excedido'}
             </span>
           )}
         </div>

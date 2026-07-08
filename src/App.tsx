@@ -8,7 +8,11 @@ import SettingsPanel from '@/components/SettingsPanel'
 import StatsPanel from '@/components/StatsPanel'
 import UpdateBanner from '@/components/UpdateBanner'
 import ProductivityBars from '@/components/ProductivityBars'
-import { useTimerStore, startTickerOnce } from '@/stores/timerStore'
+import {
+  useTimerStore,
+  startTickerOnce,
+  startPeriodicSaveOnce
+} from '@/stores/timerStore'
 import { useJobsStore } from '@/stores/jobsStore'
 import { useSettingsStore } from '@/stores/settingsStore'
 import { findCurrency } from '@/lib/currencies'
@@ -26,6 +30,7 @@ export default function App(): JSX.Element {
   const customCurrencies = useSettingsStore((s) => s.customCurrencies)
   const allCurrencies = useSettingsStore((s) => s.allCurrencies)
   const alwaysOnTop = useSettingsStore((s) => s.alwaysOnTop)
+  const zoomFactor = useSettingsStore((s) => s.zoomFactor)
 
   const addJob = useJobsStore((s) => s.addJob)
   const jobsCount = useJobsStore((s) => s.jobs.length)
@@ -36,11 +41,16 @@ export default function App(): JSX.Element {
 
   useEffect(() => {
     startTickerOnce()
+    startPeriodicSaveOnce()
   }, [])
 
   useEffect(() => {
     window.api?.window.setAlwaysOnTop(alwaysOnTop)
   }, [alwaysOnTop])
+
+  useEffect(() => {
+    window.api?.window.setZoomFactor(zoomFactor)
+  }, [zoomFactor])
 
   const chargedNum = parseFloat(charged) || 0
   const currency = findCurrency(currencyCode, customCurrencies)

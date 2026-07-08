@@ -1,5 +1,5 @@
 import { useState } from 'react'
-import { Plus, X, Pin, PinOff } from 'lucide-react'
+import { Plus, X, Pin, PinOff, Minus, Type, RotateCcw } from 'lucide-react'
 import { useSettingsStore } from '@/stores/settingsStore'
 import { presetCurrencies } from '@/lib/currencies'
 
@@ -18,9 +18,11 @@ export default function SettingsPanel(): JSX.Element {
   const goalMonthlyHours = useSettingsStore((s) => s.goalMonthlyHours)
   const setGoalMonthlyHours = useSettingsStore((s) => s.setGoalMonthlyHours)
   const currencyCode = useSettingsStore((s) => s.currencyCode)
-  const getMoneyGoals = useSettingsStore((s) => s.getMoneyGoals)
+  const moneyGoals = useSettingsStore((s) => s.moneyGoals)
   const setMoneyGoal = useSettingsStore((s) => s.setMoneyGoal)
-  const currentMoneyGoals = getMoneyGoals(currencyCode)
+  const currentMoneyGoals = moneyGoals[currencyCode] ?? { day: 0, week: 0, month: 0 }
+  const zoomFactor = useSettingsStore((s) => s.zoomFactor)
+  const setZoomFactor = useSettingsStore((s) => s.setZoomFactor)
 
   const [showCustomForm, setShowCustomForm] = useState(false)
   const [newCode, setNewCode] = useState('')
@@ -126,6 +128,39 @@ export default function SettingsPanel(): JSX.Element {
             <PinOff size={11} className="text-chalk-30" />
           )}
         </button>
+      </Section>
+
+      <Section title="Tamaño de texto">
+        <div className="flex items-center gap-1.5">
+          <button
+            onClick={() => setZoomFactor(zoomFactor - 0.1)}
+            disabled={zoomFactor <= 0.7}
+            className="flex items-center justify-center w-9 h-9 rounded-lg bg-ink-700 border border-chalk-08 text-chalk hover:border-mint disabled:opacity-30 disabled:cursor-not-allowed transition"
+            title="Reducir"
+          >
+            <Minus size={12} />
+          </button>
+          <div className="flex-1 flex items-center justify-center gap-1.5 px-3 py-2 rounded-lg bg-ink-700 border border-chalk-08 text-[11px] font-mono tabular-nums">
+            <Type size={11} className="text-chalk-50" />
+            <span>{Math.round(zoomFactor * 100)}%</span>
+          </div>
+          <button
+            onClick={() => setZoomFactor(zoomFactor + 0.1)}
+            disabled={zoomFactor >= 1.6}
+            className="flex items-center justify-center w-9 h-9 rounded-lg bg-ink-700 border border-chalk-08 text-chalk hover:border-mint disabled:opacity-30 disabled:cursor-not-allowed transition"
+            title="Aumentar"
+          >
+            <Plus size={12} />
+          </button>
+          <button
+            onClick={() => setZoomFactor(1)}
+            disabled={Math.abs(zoomFactor - 1) < 0.01}
+            className="flex items-center justify-center w-9 h-9 rounded-lg bg-ink-700 border border-chalk-08 text-chalk-70 hover:border-mint hover:text-chalk disabled:opacity-30 disabled:cursor-not-allowed transition"
+            title="Restablecer"
+          >
+            <RotateCcw size={11} />
+          </button>
+        </div>
       </Section>
 
       <Section
