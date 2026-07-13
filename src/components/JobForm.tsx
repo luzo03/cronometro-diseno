@@ -29,7 +29,7 @@ export default function JobForm({
         className="w-full px-3 py-2 rounded-lg bg-ink-700 border border-chalk-08 text-chalk placeholder:text-chalk-30 text-[12px] focus-mint transition"
       />
       <div className="flex gap-1.5">
-        <div className="flex-1 flex items-center bg-ink-700 border border-chalk-08 rounded-lg focus-within:border-mint focus-within:shadow-[0_0_0_1px_rgba(94,234,212,0.35)] transition">
+        <div className="flex-1 flex items-center bg-ink-700 border border-chalk-08 rounded-lg focus-within:border-mint focus-within:shadow-[0_0_0_1px_rgb(var(--accent-rgb)/0.35)] transition">
           <span className="pl-3 pr-1 text-chalk-50 text-[12px] font-mono">
             {currency.symbol}
           </span>

@@ -18,6 +18,7 @@ type PersistedSettings = {
   moneyGoals: Record<string, MoneyGoals>
   productivityMode: ProductivityMode
   zoomFactor: number
+  accentColor: string
 }
 
 type SettingsState = PersistedSettings & {
@@ -37,6 +38,7 @@ type SettingsState = PersistedSettings & {
   getMoneyGoals: (currency: string) => MoneyGoals
   setProductivityMode: (mode: ProductivityMode) => void
   setZoomFactor: (factor: number) => void
+  setAccentColor: (color: string) => void
   allCurrencies: () => Currency[]
 }
 
@@ -51,7 +53,8 @@ function defaultSettings(): PersistedSettings {
     goalMonthlyHours: 120,
     moneyGoals: {},
     productivityMode: 'hours',
-    zoomFactor: 1
+    zoomFactor: 1,
+    accentColor: '#5EEAD4'
   }
 }
 
@@ -101,7 +104,12 @@ function loadSettings(): PersistedSettings {
       zoomFactor:
         typeof parsed.zoomFactor === 'number' && parsed.zoomFactor > 0
           ? Math.max(0.7, Math.min(1.6, parsed.zoomFactor))
-          : d.zoomFactor
+          : d.zoomFactor,
+      accentColor:
+        typeof parsed.accentColor === 'string' &&
+        /^#[0-9A-Fa-f]{6}$/.test(parsed.accentColor)
+          ? parsed.accentColor.toUpperCase()
+          : d.accentColor
     }
   } catch {
     return defaultSettings()
@@ -120,7 +128,8 @@ function persist(state: PersistedSettings): void {
     goalMonthlyHours: state.goalMonthlyHours,
     moneyGoals: state.moneyGoals,
     productivityMode: state.productivityMode,
-    zoomFactor: state.zoomFactor
+    zoomFactor: state.zoomFactor,
+    accentColor: state.accentColor
   }
   localStorage.setItem(STORAGE_KEY, JSON.stringify(toSave))
 }
@@ -199,6 +208,12 @@ export const useSettingsStore = create<SettingsState>((set, get) => {
     setZoomFactor: (factor) => {
       const clamped = Math.max(0.7, Math.min(1.6, factor))
       set({ zoomFactor: clamped })
+      persist(get())
+    },
+
+    setAccentColor: (color) => {
+      if (!/^#[0-9A-Fa-f]{6}$/.test(color)) return
+      set({ accentColor: color.toUpperCase() })
       persist(get())
     },
 

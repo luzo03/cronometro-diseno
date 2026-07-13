@@ -1,7 +1,9 @@
 import { useState } from 'react'
-import { Plus, X, Pin, PinOff, Minus, Type, RotateCcw } from 'lucide-react'
+import { Plus, X, Pin, PinOff, Minus, Type, RotateCcw, Check } from 'lucide-react'
 import { useSettingsStore } from '@/stores/settingsStore'
 import { presetCurrencies } from '@/lib/currencies'
+import { accentPresets, normalizeHex } from '@/lib/color'
+import ColorWheel from '@/components/ColorWheel'
 
 export default function SettingsPanel(): JSX.Element {
   const hourlyRate = useSettingsStore((s) => s.hourlyRate)
@@ -23,6 +25,8 @@ export default function SettingsPanel(): JSX.Element {
   const currentMoneyGoals = moneyGoals[currencyCode] ?? { day: 0, week: 0, month: 0 }
   const zoomFactor = useSettingsStore((s) => s.zoomFactor)
   const setZoomFactor = useSettingsStore((s) => s.setZoomFactor)
+  const accentColor = useSettingsStore((s) => s.accentColor)
+  const setAccentColor = useSettingsStore((s) => s.setAccentColor)
 
   const [showCustomForm, setShowCustomForm] = useState(false)
   const [newCode, setNewCode] = useState('')
@@ -128,6 +132,10 @@ export default function SettingsPanel(): JSX.Element {
             <PinOff size={11} className="text-chalk-30" />
           )}
         </button>
+      </Section>
+
+      <Section title="Color de acento">
+        <AccentPicker current={accentColor} onPick={setAccentColor} />
       </Section>
 
       <Section title="Tamaño de texto">
@@ -246,6 +254,96 @@ export default function SettingsPanel(): JSX.Element {
           </div>
         )}
       </Section>
+    </div>
+  )
+}
+
+function AccentPicker({
+  current,
+  onPick
+}: {
+  current: string
+  onPick: (hex: string) => void
+}): JSX.Element {
+  const [customValue, setCustomValue] = useState('')
+  const [error, setError] = useState(false)
+
+  function tryCustom(): void {
+    const hex = normalizeHex(customValue)
+    if (!hex) {
+      setError(true)
+      return
+    }
+    setError(false)
+    onPick(hex)
+    setCustomValue('')
+  }
+
+  const currentUpper = current.toUpperCase()
+
+  return (
+    <div className="flex flex-col gap-3">
+      <ColorWheel value={current} onChange={onPick} />
+
+      <div className="flex items-center gap-1.5">
+        <div className="flex-1 flex items-center bg-ink-700 border border-chalk-08 rounded-lg focus-within:border-mint transition">
+          <div
+            className="w-6 h-6 ml-1.5 rounded border border-chalk-08 flex-shrink-0"
+            style={{ backgroundColor: current }}
+          />
+          <input
+            type="text"
+            value={customValue}
+            onChange={(e) => {
+              setCustomValue(e.target.value)
+              setError(false)
+            }}
+            onKeyDown={(e) => {
+              if (e.key === 'Enter') tryCustom()
+            }}
+            placeholder={current}
+            className="w-full bg-transparent px-2 py-1.5 text-chalk text-[11px] font-mono uppercase min-w-0"
+          />
+        </div>
+        <button
+          onClick={tryCustom}
+          disabled={!customValue.trim()}
+          className="px-2.5 py-1.5 rounded-lg bg-mint hover:bg-mint-soft text-ink text-[10px] font-semibold uppercase tracking-wider transition disabled:opacity-30 disabled:cursor-not-allowed flex-shrink-0"
+        >
+          OK
+        </button>
+      </div>
+      {error && (
+        <span className="text-[10px] text-[#F87171]">
+          Color inválido. Formato: #RRGGBB (ej. #FF5566)
+        </span>
+      )}
+
+      <div>
+        <div className="text-[9px] uppercase tracking-wider text-chalk-50 mb-1.5">
+          Rápidos
+        </div>
+        <div className="grid grid-cols-5 gap-1.5">
+          {accentPresets.map((p) => {
+            const active = p.hex.toUpperCase() === currentUpper
+            return (
+              <button
+                key={p.hex}
+                onClick={() => onPick(p.hex)}
+                title={p.name}
+                className={`aspect-square rounded-lg border transition flex items-center justify-center ${
+                  active
+                    ? 'border-chalk ring-2 ring-chalk-15'
+                    : 'border-chalk-08 hover:border-chalk-30'
+                }`}
+                style={{ backgroundColor: p.hex }}
+              >
+                {active && <Check size={12} className="text-ink" />}
+              </button>
+            )
+          })}
+        </div>
+      </div>
     </div>
   )
 }

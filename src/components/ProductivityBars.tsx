@@ -202,7 +202,10 @@ function Bar({
   const pct = hasGoal ? (current / goal) * 100 : 0
   const clamped = Math.min(pct, 100)
   const exceeded = pct > 100
-  const fillColor = exceeded ? '#FCD34D' : '#5EEAD4'
+  const fillColor = exceeded ? '#FCD34D' : 'rgb(var(--accent-rgb))'
+  const glowShadow = exceeded
+    ? '0 0 8px rgba(252, 211, 77, 0.4)'
+    : '0 0 8px rgb(var(--accent-rgb) / 0.4)'
 
   return (
     <div className="flex items-center gap-2">
@@ -215,7 +218,7 @@ function Bar({
           style={{
             width: hasGoal ? `${clamped}%` : '0%',
             backgroundColor: fillColor,
-            boxShadow: clamped > 0 ? `0 0 8px ${fillColor}66` : undefined
+            boxShadow: clamped > 0 ? glowShadow : undefined
           }}
         />
       </div>
@@ -253,7 +256,10 @@ function MoneyBar({
   const pct = hasGoal ? (current / goal) * 100 : 0
   const clamped = Math.min(pct, 100)
   const exceeded = pct > 100
-  const fillColor = exceeded ? '#FCD34D' : '#5EEAD4'
+  const fillColor = exceeded ? '#FCD34D' : 'rgb(var(--accent-rgb))'
+  const glowShadow = exceeded
+    ? '0 0 8px rgba(252, 211, 77, 0.4)'
+    : '0 0 8px rgb(var(--accent-rgb) / 0.4)'
 
   return (
     <div className="flex flex-col gap-0.5">
@@ -267,7 +273,7 @@ function MoneyBar({
             style={{
               width: hasGoal ? `${clamped}%` : '0%',
               backgroundColor: fillColor,
-              boxShadow: clamped > 0 ? `0 0 8px ${fillColor}66` : undefined
+              boxShadow: clamped > 0 ? glowShadow : undefined
             }}
           />
         </div>

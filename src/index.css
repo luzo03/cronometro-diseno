@@ -2,6 +2,13 @@
 @tailwind components;
 @tailwind utilities;
 
+:root {
+  /* Se actualizan desde JS según el color de acento elegido. */
+  --accent-rgb: 94 234 212; /* #5EEAD4 */
+  --accent-soft-rgb: 167 243 208; /* #A7F3D0 */
+  --accent-deep-rgb: 45 212 191; /* #2DD4BF */
+}
+
 html,
 body,
 #root {
@@ -51,7 +58,7 @@ input[type='number'] {
 
 /* Subtle glow under the timer when running */
 .glow-mint {
-  box-shadow: 0 0 32px -8px rgba(94, 234, 212, 0.35);
+  box-shadow: 0 0 32px -8px rgb(var(--accent-rgb) / 0.35);
 }
 
 /* Custom scrollbar — barely visible */
@@ -78,6 +85,6 @@ select option {
 
 /* Focus ring */
 .focus-mint:focus {
-  border-color: #5eead4 !important;
-  box-shadow: 0 0 0 1px rgba(94, 234, 212, 0.35);
+  border-color: rgb(var(--accent-rgb)) !important;
+  box-shadow: 0 0 0 1px rgb(var(--accent-rgb) / 0.35);
 }

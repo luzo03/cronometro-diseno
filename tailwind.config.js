@@ -13,11 +13,11 @@ module.exports = {
           500: '#26262C'
         },
         mint: {
-          DEFAULT: '#5EEAD4',
-          soft: '#A7F3D0',
-          deep: '#2DD4BF',
-          dim: 'rgba(94, 234, 212, 0.12)',
-          glow: 'rgba(94, 234, 212, 0.25)'
+          DEFAULT: 'rgb(var(--accent-rgb) / <alpha-value>)',
+          soft: 'rgb(var(--accent-soft-rgb) / <alpha-value>)',
+          deep: 'rgb(var(--accent-deep-rgb) / <alpha-value>)',
+          dim: 'rgb(var(--accent-rgb) / 0.12)',
+          glow: 'rgb(var(--accent-rgb) / 0.25)'
         },
         chalk: {
           DEFAULT: '#FAFAFA',

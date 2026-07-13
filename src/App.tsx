@@ -1,5 +1,5 @@
 import { useEffect, useRef, useState } from 'react'
-import { X, Settings, History, Save, Minus, BarChart3 } from 'lucide-react'
+import { X, Settings, History, Save, Minus, BarChart3, Hourglass } from 'lucide-react'
 import TimerDisplay from '@/components/TimerDisplay'
 import JobForm from '@/components/JobForm'
 import ComparisonResult from '@/components/ComparisonResult'
@@ -8,6 +8,9 @@ import SettingsPanel from '@/components/SettingsPanel'
 import StatsPanel from '@/components/StatsPanel'
 import UpdateBanner from '@/components/UpdateBanner'
 import ProductivityBars from '@/components/ProductivityBars'
+import SessionModal from '@/components/SessionModal'
+import SessionBar from '@/components/SessionBar'
+import SessionSummary from '@/components/SessionSummary'
 import {
   useTimerStore,
   startTickerOnce,
@@ -15,7 +18,10 @@ import {
 } from '@/stores/timerStore'
 import { useJobsStore } from '@/stores/jobsStore'
 import { useSettingsStore } from '@/stores/settingsStore'
+import { useSessionStore } from '@/stores/sessionStore'
+import { sessionWorkedMs, sessionJobsCount } from '@/lib/stats'
 import { findCurrency } from '@/lib/currencies'
+import { lighten, darken, rgbTriplet } from '@/lib/color'
 
 type Panel = 'none' | 'history' | 'stats' | 'settings'
 
@@ -23,6 +29,8 @@ export default function App(): JSX.Element {
   const [jobName, setJobName] = useState('')
   const [charged, setCharged] = useState('')
   const [panel, setPanel] = useState<Panel>('none')
+  const [showSessionModal, setShowSessionModal] = useState(false)
+  const [modalDismissedThisRun, setModalDismissedThisRun] = useState(false)
 
   const hourlyRate = useSettingsStore((s) => s.hourlyRate)
   const currencyCode = useSettingsStore((s) => s.currencyCode)
@@ -31,9 +39,16 @@ export default function App(): JSX.Element {
   const allCurrencies = useSettingsStore((s) => s.allCurrencies)
   const alwaysOnTop = useSettingsStore((s) => s.alwaysOnTop)
   const zoomFactor = useSettingsStore((s) => s.zoomFactor)
+  const accentColor = useSettingsStore((s) => s.accentColor)
 
   const addJob = useJobsStore((s) => s.addJob)
   const jobsCount = useJobsStore((s) => s.jobs.length)
+
+  const sessionActive = useSessionStore((s) => s.active)
+  const sessionStartedAt = useSessionStore((s) => s.startedAt)
+  const sessionPlannedMs = useSessionStore((s) => s.plannedMs)
+  const sessionLastSummary = useSessionStore((s) => s.lastSummary)
+  const endSession = useSessionStore((s) => s.endSession)
   const resetTimer = useTimerStore((s) => s.reset)
   useTimerStore((s) => s.tick)
   const elapsedMs = useTimerStore.getState().getElapsedMs()
@@ -44,6 +59,45 @@ export default function App(): JSX.Element {
     startPeriodicSaveOnce()
   }, [])
 
+  // Mostrar el modal de sesión al arrancar si no hay sesión activa ni resumen pendiente
+  useEffect(() => {
+    if (
+      !sessionActive &&
+      !sessionLastSummary &&
+      !modalDismissedThisRun &&
+      !showSessionModal
+    ) {
+      setShowSessionModal(true)
+    }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [sessionActive, sessionLastSummary])
+
+  // Auto-terminar la sesión cuando se cumple el tiempo planeado
+  useEffect(() => {
+    if (!sessionActive || sessionStartedAt === null || sessionPlannedMs <= 0)
+      return
+    const check = (): void => {
+      const s = useSessionStore.getState()
+      if (!s.active || s.startedAt === null) return
+      const elapsedNow = Date.now() - s.startedAt
+      if (elapsedNow >= s.plannedMs) {
+        const workedMs = sessionWorkedMs(
+          useJobsStore.getState().jobs,
+          s.startedAt,
+          useTimerStore.getState().getElapsedMs()
+        )
+        const count = sessionJobsCount(
+          useJobsStore.getState().jobs,
+          s.startedAt
+        )
+        endSession(workedMs, count)
+      }
+    }
+    check()
+    const id = setInterval(check, 5000)
+    return () => clearInterval(id)
+  }, [sessionActive, sessionStartedAt, sessionPlannedMs, endSession])
+
   useEffect(() => {
     window.api?.window.setAlwaysOnTop(alwaysOnTop)
   }, [alwaysOnTop])
@@ -51,6 +105,15 @@ export default function App(): JSX.Element {
   useEffect(() => {
     window.api?.window.setZoomFactor(zoomFactor)
   }, [zoomFactor])
+
+  useEffect(() => {
+    const root = document.documentElement
+    const softHex = lighten(accentColor, 0.35)
+    const deepHex = darken(accentColor, 0.15)
+    root.style.setProperty('--accent-rgb', rgbTriplet(accentColor))
+    root.style.setProperty('--accent-soft-rgb', rgbTriplet(softHex))
+    root.style.setProperty('--accent-deep-rgb', rgbTriplet(deepHex))
+  }, [accentColor])
 
   const chargedNum = parseFloat(charged) || 0
   const currency = findCurrency(currencyCode, customCurrencies)
@@ -104,13 +167,17 @@ export default function App(): JSX.Element {
       <TitleBar
         onClose={() => window.api?.window.close()}
         onMinimize={() => window.api?.window.minimize()}
+        onOpenSession={() => setShowSessionModal(true)}
         onToggleHistory={() => togglePanel('history')}
         onToggleStats={() => togglePanel('stats')}
         onToggleSettings={() => togglePanel('settings')}
         panel={panel}
         jobsCount={jobsCount}
         running={running}
+        sessionActive={sessionActive}
       />
+
+      <SessionBar />
 
       <div className="flex-1 min-h-0 overflow-y-auto overflow-x-hidden">
         <div className="px-4 pt-3 pb-3 flex flex-col gap-3">
@@ -179,6 +246,16 @@ export default function App(): JSX.Element {
       </div>
 
       <UpdateBanner />
+
+      {showSessionModal && (
+        <SessionModal
+          onClose={() => {
+            setShowSessionModal(false)
+            setModalDismissedThisRun(true)
+          }}
+        />
+      )}
+      <SessionSummary />
     </div>
   )
 }
@@ -186,32 +263,50 @@ export default function App(): JSX.Element {
 function TitleBar({
   onClose,
   onMinimize,
+  onOpenSession,
   onToggleHistory,
   onToggleStats,
   onToggleSettings,
   panel,
   jobsCount,
-  running
+  running,
+  sessionActive
 }: {
   onClose: () => void
   onMinimize: () => void
+  onOpenSession: () => void
   onToggleHistory: () => void
   onToggleStats: () => void
   onToggleSettings: () => void
   panel: Panel
   jobsCount: number
   running: boolean
+  sessionActive: boolean
 }): JSX.Element {
   return (
     <div className="drag-region flex items-center justify-between px-3 py-2 border-b border-chalk-05">
       <div className="flex items-center gap-2 text-[11px] font-semibold tracking-tightish">
         <span
           className={`w-1.5 h-1.5 rounded-full transition-colors ${running ? 'bg-mint' : 'bg-chalk-30'}`}
-          style={running ? { boxShadow: '0 0 8px #5EEAD4' } : undefined}
+          style={
+            running
+              ? { boxShadow: '0 0 8px rgb(var(--accent-rgb) / 1)' }
+              : undefined
+          }
         />
         <span className="text-chalk-70">DesignTimer</span>
       </div>
       <div className="flex items-center gap-0.5 no-drag">
+        <IconButton
+          onClick={onOpenSession}
+          active={sessionActive}
+          title={sessionActive ? 'Sesión activa' : 'Nueva sesión'}
+        >
+          <Hourglass
+            size={11}
+            className={sessionActive ? 'text-mint' : undefined}
+          />
+        </IconButton>
         <IconButton
           onClick={onToggleHistory}
           active={panel === 'history'}

@@ -55,6 +55,23 @@ export function totalChargedInCurrency(jobs: Job[], code: string): number {
     .reduce((acc, j) => acc + j.charged, 0)
 }
 
+// Tiempo trabajado dentro de una sesión: jobs guardados desde que arrancó
+// + lo que lleva corriendo el cronómetro ahora mismo (aunque no se haya guardado).
+export function sessionWorkedMs(
+  jobs: Job[],
+  sessionStartedAt: number,
+  currentTimerElapsedMs: number
+): number {
+  const savedMs = jobs
+    .filter((j) => j.createdAt >= sessionStartedAt)
+    .reduce((acc, j) => acc + j.elapsedMs, 0)
+  return savedMs + Math.max(0, currentTimerElapsedMs)
+}
+
+export function sessionJobsCount(jobs: Job[], sessionStartedAt: number): number {
+  return jobs.filter((j) => j.createdAt >= sessionStartedAt).length
+}
+
 export type Effectiveness = {
   effectiveMs: number // tiempo dentro del presupuesto (te lo pagaron)
   lostMs: number // tiempo que te pasaste del presupuesto (no cobrado)
